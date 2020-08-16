@@ -12,6 +12,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Persistence;
 using Microsoft.EntityFrameworkCore;
+using MediatR;
+using Application.Activities;
+using FluentValidation.AspNetCore;
 
 
 namespace API
@@ -28,11 +31,23 @@ namespace API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            services.AddControllers()
+            .AddFluentValidation(cfg => {
+                cfg.RegisterValidatorsFromAssemblyContaining<Create>();
+            });
             services.AddDbContext<DataContext>(opt => 
             {
                 opt.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
             });
+
+            services.AddCors(opts => {
+                opts.AddPolicy("CorsPolicy", policy => {
+                    policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
+                });
+            });
+            services.AddMediatR(typeof(List.Handler).Assembly);
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -40,8 +55,8 @@ namespace API
         {
             
             dataContext.Database.Migrate();
-            
-            
+            Seed.SeedData(dataContext); 
+                        
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -53,10 +68,14 @@ namespace API
 
             app.UseAuthorization();
 
+            app.UseCors("CorsPolicy");
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
+
+            
         }
     }
 }
