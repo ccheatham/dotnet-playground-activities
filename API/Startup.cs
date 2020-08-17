@@ -15,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 using MediatR;
 using Application.Activities;
 using FluentValidation.AspNetCore;
-
+using API.Middleware;
 
 namespace API
 {
@@ -56,11 +56,15 @@ namespace API
             
             dataContext.Database.Migrate();
             Seed.SeedData(dataContext); 
-                        
+            
+            app.UseMiddleware<ErrorHandlingMiddleware>();      
+            
             if (env.IsDevelopment())
             {
-                app.UseDeveloperExceptionPage();
+                // app.UseDeveloperExceptionPage();
             }
+
+           
 
             // app.UseHttpsRedirection();
 
