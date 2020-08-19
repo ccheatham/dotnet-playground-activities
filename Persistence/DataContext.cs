@@ -9,8 +9,11 @@ namespace Persistence
         public DataContext(DbContextOptions options) : base(options) {
 
         }
-        public DbSet<Value> Values { get; set;}
-        public DbSet<Activity> Activities { get; set;}
+
+        public DbSet<Value> Values { get; set; }
+        public DbSet<Activity> Activities { get; set; }
+        public DbSet<UserActivity> UserActivities { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder){
             
@@ -24,6 +27,20 @@ namespace Persistence
                     new Value {Id=4, Name="Hello, Brantly"},
                     new Value {Id=5, Name="Hello, Noah"}
                 );
+
+                
+            modelBuilder.Entity<UserActivity>(x => x.HasKey(ua =>
+                new { ua.AppUserId, ua.ActivityId }));
+
+            modelBuilder.Entity<UserActivity>()
+                .HasOne(u => u.AppUser)
+                .WithMany(a => a.UserActivities)
+                .HasForeignKey(u => u.AppUserId);
+
+            modelBuilder.Entity<UserActivity>()
+                .HasOne(a => a.Activity)
+                .WithMany(u => u.UserActivities)
+                .HasForeignKey(a => a.ActivityId);
         }
     }
 }
